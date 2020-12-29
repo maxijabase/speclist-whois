@@ -8,6 +8,7 @@
 
 #include <sourcemod>
 #include <tf2_stocks>
+#include <morecolors>
 #include "include/smlib"
 
 #pragma semicolon 1
@@ -20,6 +21,7 @@
 
 char permNames[MAXPLAYERS][64];
 bool listDrawn[MAXPLAYERS + 1];
+bool warningSent = false;
 Database g_Database;
 
 /* Plugin Info */
@@ -44,7 +46,7 @@ public void OnPluginStart() {
 
 public void SQL_ConnectionCallback(Database db, const char[] error, any data) {
 	if (db == null) {
-		SetFailState("%s %s", PREFIX, error);
+		LogError("%s %s", PREFIX, error);
 		return;
 	}
 	g_Database = db;
@@ -53,6 +55,9 @@ public void SQL_ConnectionCallback(Database db, const char[] error, any data) {
 /* Getting user's permaname when he connects and storing it locally */
 
 public void OnClientAuthorized(int client, const char[] auth) {
+	if (g_Database == null) {
+		return;
+	}
 	char query[128];
 	g_Database.Format(query, sizeof(query), "SELECT name FROM whois_permname WHERE steam_id = '%s';", auth);
 	g_Database.Query(SQL_ClientConnectedNameFetch, query, GetClientUserId(client));
@@ -78,6 +83,10 @@ public void SQL_ClientConnectedNameFetch(Database db, DBResultSet results, const
 /* Command Callback */
 
 public Action CMD_SL(int client, int args) {
+	if (g_Database == null && !warningSent) {
+		MC_PrintToChatAll("{green}%s {default}Database connection failed. Aliases will NOT be shown.", PREFIX);
+		warningSent = true;
+	}
 	int userid = GetClientUserId(client);
 	listDrawn[client] = !listDrawn[client];
 	DrawList(userid);
@@ -122,7 +131,7 @@ public void OnClientDisconnect(int client) {
 
 public Action DrawTimer(Handle timer) {
 	for (int i = 1; i <= MaxClients; i++) {
-		if (listDrawn[i]) {
+		if (IsClientInGame(i) && listDrawn[i]) {
 			DrawList(GetClientUserId(i));
 		}
 	}
