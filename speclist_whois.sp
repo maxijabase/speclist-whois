@@ -14,12 +14,12 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define PLUGIN_VERSION "1.0"
+#define PLUGIN_VERSION "1.1"
 #define PREFIX "[WhoIs List]"
 
 /* Globals */
 
-char permNames[MAXPLAYERS][64];
+char permNames[MAXPLAYERS][MAX_NAME_LENGTH];
 bool listDrawn[MAXPLAYERS + 1];
 bool warningSent = false;
 Database g_Database;
@@ -76,7 +76,7 @@ public void SQL_ClientConnectedNameFetch(Database db, DBResultSet results, const
 	if (results.FetchRow()) {
 		results.FieldNameToNum("name", nameCol);
 		results.FetchString(nameCol, name, sizeof(name));
-		strcopy(permNames[GetClientOfUserId(userid)], 64, name);
+		strcopy(permNames[GetClientOfUserId(userid)], MAX_NAME_LENGTH, name);
 	}
 }
 
@@ -124,7 +124,7 @@ void DrawList(int userid) {
 /* Deleting client's name from the array on disconnect */
 
 public void OnClientDisconnect(int client) {
-	strcopy(permNames[client], 64, "");
+	strcopy(permNames[client], MAX_NAME_LENGTH, "");
 }
 
 /* Repeating timer to keep the list alive on screen */
@@ -148,4 +148,4 @@ int GetSpecCount() {
 		}
 	}
 	return result;
-} 
+}
